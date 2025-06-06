@@ -1,2 +1,2 @@
-# pg
+# pg Resources
 Postgres
