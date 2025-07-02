@@ -15,17 +15,19 @@ More about template databases ⤵️
 
 ➡️ Create a template based on production, dump your production schema and extensions
 
-pg_dump -U my_user -h my_host -p 5432 -d my_database --exclude-table-data --no-owner --no-privileges > template.sql
+```pg_dump -U my_user -h my_host -p 5432 -d my_database --exclude-table-data --no-owner --no-privileges > template.sql```
 
 —exclude table data will remove the table data but include the full schema and all extensions. 
 
 ➡️ Create a restore database with your schema
 
+```
 -- create the database
 CREATE DATABASE my_template_db OWNER postgres;
 
 -- restore from the the dump file
 psql -U my_user -h my_host -p 5432 -d my_template_db -f template.sql
+```
 
 Add seed data that you want to be used at this point. Adding seed data here makes things really fast when you do a template copy, as opposed to doing a restore function. 
 
@@ -37,7 +39,7 @@ I should note here that this template database feature is only available from th
 
 ➡️ Now create a new database from the template
 
-CREATE DATABASE new_db WITH TEMPLATE my_template_db OWNER my_user;
+```CREATE DATABASE new_db WITH TEMPLATE my_template_db OWNER my_user;```
 
 This will copy everything from my_template_db into new_db.
 
