@@ -1,0 +1,19 @@
+---
+- name: Create a PostgreSQL user with DBA privileges
+  hosts: target_servers
+  become: true
+  collections:
+    - community.postgresql
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Create a PostgreSQL user with DBA privileges
+      community.postgresql.postgresql_user:
+        name: "{{ dba_username }}"
+        password: "{{ dba_password }}"
+        role_attr_flags: 
+          - CREATEDB
+          - CREATEROLE
+          - SUPERUSER
+        state: present

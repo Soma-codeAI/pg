@@ -1,0 +1,23 @@
+# Postgres Specific Variables
+---
+pg_version: 16
+__postgresql_data_dir: /var/lib/pgsql/{{ pg_version }}/data
+__postgresql_archive_dir: /var/lib/pgsql/{{ pg_version }}/archive
+
+__postgresql_main_conf_file: "{{ __postgresql_data_dir }}/postgresql.conf"
+__postgresql_hba_conf_file: "{{ __postgresql_data_dir }}/pg_hba.conf"
+
+# Ansible DBA User
+dba_username: "ansible_dba"
+dba_password: "<dba_password>"
+
+app_db_name: "jiradb"
+app_db_user: "jira_db_user"
+app_db_password:  "<Password>"
+
+# Ansible Replica User
+
+replication_user: "replicator"
+replication_password: "replication_password"
+
+# Ansible Primary/Replica IPs

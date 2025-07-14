@@ -1,0 +1,36 @@
+ - name: Create PostgreSQL user app_db_user
+    community.postgresql.postgresql_user:
+      name: "{{ app_db_user }}"  
+      password: "{{ app_db_password }}"
+      state: present
+      user: "{{ dba_username }}"
+      password: "{{ dba_password }}" 
+  
+  - name: Create a new database with name "appdb" and specific encoding and locale # settings
+    community.postgresql.postgresql_db:
+      name: "{{ app_db_name }}"
+      encoding: UNICODE
+      lc_collate: C
+      lc_ctype: C
+      template: template0
+      owner: "{{ app_db_user }}"
+      login_user: "{{ dba_username }}"
+      login_password: "{{ dba_password }}" 
+
+  - name: Grant all privileges on database appdb to app_db_user
+    community.postgresql.postgresql_privs:
+      database: "{{ app_db_name }}"
+      roles: "{{ app_db_user }}"
+      objs: "{{ app_db_name }}"
+      privs: ALL
+      type: database
+      login_user: "{{ dba_username }}"
+      login_password: "{{ dba_password }}" 
+
+  - name: Connect to appdb and grant permissions on public schema
+    community.postgresql.postgresql_query:
+      db: "{{ app_db_name }}"
+      query: "GRANT ALL ON SCHEMA public TO {{ app_db_user }};"
+      login_user: "{{ dba_username }}"
+      login_password: "{{ dba_password }}" 
+    register: schema_grant

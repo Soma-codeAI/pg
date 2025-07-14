@@ -1,0 +1,55 @@
+# Rule Name: local access as postgres user
+# Description: none
+# Order: 1
+local   all     postgres                ident
+local   all     ansible_dba             md5
+
+# Rule Name: local access as postgres user
+# Description: none
+# Order: 2
+host    all     ansible_dba  127.0.0.1/32     md5
+host    all     ansible_dba  0.0.0.0/0        md5
+
+# Rule Name: allow access to all users
+# Description: none
+# Order: 100
+host    all     all            127.0.0.1/32     md5
+
+# Rule Name: allow access to ipv6 localhost
+# Description: none
+# Order: 101
+host    all     all     ::1/128 md5
+
+# Rule Name: allow access for subnet.
+# Description: none
+# Order: 150
+host    app_db    app_db_user    10.0.0.0/8 md5
+
+# Rule Name: allow access to ipv6 localhost
+# Description: none
+# Order: 101
+host    all     all     ::1/128 md5
+
+# Rule Name: allow replication user to access server from 10.213.12.28
+# Description: none
+# Order: 150
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                      peer
+host    replication     all     127.0.0.1/32     scram-sha-256
+host    replication     all     ::1/128          scram-sha-256
+
+# Rule Name: local access to database with same name
+# Description: none
+# Order: 2
+local   all     all             ident
+
+# Rule Name: allow localhost TCP access to postgresql user
+# Description: none
+# Order: 3
+host    all     postgres        127.0.0.1/32    md5
+
+# Rule Name: deny access to postgresql user
+# Description: none
+# Order: 4
+host    all     postgres        0.0.0.0/0       reject

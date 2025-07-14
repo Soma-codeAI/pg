@@ -1,0 +1,43 @@
+---
+- name: Config postgresql version 16
+  hosts: target_servers
+  collections:
+    - community.postgresql
+  vars_files:
+    - vars/main.yml
+  vars:
+    pg_version: 16
+
+  tasks:
+  - name: Initialize the PostgreSQL database
+    command: /usr/pgsql-{{ pg_version }}/bin/postgresql-{{ pg_version }}-setup initdb
+    args:
+      creates: /var/lib/pgsql/{{ pg_version }}/data/pg_hba.conf
+
+  - name: Check PostgreSQL service status
+    command: "systemctl stop postgresql-{{ pg_version }}"
+    register: result
+
+  - name: Configure pg_hba.conf
+    become: true
+    template:
+      backup: true
+      dest: "{{ __postgresql_hba_conf_file }}"
+      src: pg_hba.conf.j2
+      mode: "0600"
+      owner: postgres
+      group: postgres
+    when: __postgresql_hba_conf_file is defined
+    notify: Restart PostgreSQL
+
+  - name: Ensure PostgreSQL service is enabled and started
+    service:
+      name: postgresql-{{ pg_version }}
+      state: started
+      enabled: yes
+
+  handlers:
+   - name: Restart PostgreSQL
+     service:
+       name: postgresql-{{ pg_version }}
+       state: restarted

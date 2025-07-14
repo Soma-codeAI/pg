@@ -1,0 +1,69 @@
+---
+- name: Setup PostgreSQL Replication
+  hosts: primary
+  become: yes
+  vars_files:
+    - vars/main.yml
+    
+  tasks:
+  - name: Ensure PostgreSQL is started
+    service:
+      name: postgresql-{{ pg_version }}
+      state: started
+      enabled: true
+
+  - name: Configure postgresql.conf for replication
+    lineinfile:
+      backup: true
+      path: "{{__postgresql_main_conf_file}}"
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      state: present
+    with_items:
+      - { regexp: '^#?(listen_addresses\s*=.*)', line: "listen_addresses = '*'" }
+      - { regexp: '^#?(wal_level\s*=.*)', line: "wal_level = 'replica'" }
+      - { regexp: '^#?(max_wal_senders\s*=.*)', line: "max_wal_senders = 10" }
+      - { regexp: '^#?(wal_keep_size\s*=.*)', line: "wal_keep_size = 64" }
+      - { regexp: '^#?(archive_mode\s*=.*)', line: "archive_mode = on" }
+      - { regexp: '^#?( \s*=.*)', line: "archive_command = 'test ! -f {{ __postgresql_archive_dir }}/%f && cp %p {{ __postgresql_archive_dir }}/%f'" }
+
+  - name: Ensure PostgreSQL is restarted
+    service:
+      name: postgresql-{{ pg_version }}
+      state: restarted
+      enabled: true
+
+  - name: Create replication slots for replicas
+    become_user: postgres
+    community.postgresql.postgresql_slot:
+      name: "{{ hostvars[item].slot_name }}"
+      state: present
+    with_items: "{{ groups['replica'] }}"
+
+- name: Setup PostgreSQL Replica
+  hosts: replica
+  become: yes
+  vars_files:
+    - vars/main.yml
+  tasks:
+  - name: Ensure PostgreSQL is stopped
+    service:
+      name: postgresql-{{ pg_version }}
+      state: stopped
+      enabled: true
+  
+  - name: Clear existing data directory
+    file:
+      path: "{{ __postgresql_data_dir }}"
+      state: absent
+  
+  - name: Clone data from primary
+    command: pg_basebackup -h {{ primary_ip }} -D "{{ __postgresql_data_dir }}" -U {{ replication_user }} -p 5432 -v -P -Xs -R -S {{ slot_name }} -Fp
+    environment:
+      PGPASSWORD: "{{ replication_password }}"
+  
+  - name: Ensure PostgreSQL is restarted
+    service:
+      name: postgresql-{{ pg_version }}
+      state: restarted
+      enabled: true
